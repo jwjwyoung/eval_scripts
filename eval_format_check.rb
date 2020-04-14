@@ -1,4 +1,5 @@
 load "./eval.rb"
+load "./eval_mysql.rb"
 require "faker"
 
 # only 1 sql query is needed, since we will add check before issuing the queries
@@ -25,12 +26,16 @@ end
 db = "onebody200k_dev"
 # initialize the conn
 conn = PG.connect(:hostaddr => "127.0.0.1", :port => 5432, :dbname => db, :user => "jwy", :password => "")
+mysql_conn = build_connection("onebody_dev")
 
 # # format check barcode_id #11
 n = 1000
 sql = "" '
 SELECT "families".* FROM "families" WHERE "families"."site_id" = 1 AND (barcode_id = $1 or alternate_barcode_id = $1)
 ' ""
+mysql_query = "
+SELECT `families`.* FROM `families` WHERE `families`.`site_id` = 1 AND (barcode_id = $1 or alternate_barcode_id = $1)
+"
 params = [""]
 familiy_barcode_ids = get_all_table_fields(conn, "families", "barcode_id") + get_all_table_fields(conn, "families", "alternate_barcode_id")
 index_range_hash = {}
@@ -40,6 +45,7 @@ index_range_hash[0] = generate_random_barcode_id_params(n)
 format_regex = /\A\d+\z/
 format_param_index = 0
 benchmark_queries(n, conn, [sql, 11], params, format_regex, format_param_index, index_range_hash)
+benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 11], params, format_regex, format_param_index, index_range_hash, with = true)
 
 # #23
 sql = "" '
