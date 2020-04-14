@@ -18,7 +18,7 @@ def execute_sql(conn, sql, params, format_check, ruby_stm = nil)
       execute_sql(conn, s, params, format_check)
     end
   end
-end 
+end
 
 def execute_sql_before(conn, sql, params)
   if sql.include? "$"

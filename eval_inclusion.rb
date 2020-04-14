@@ -6,8 +6,8 @@ def benchmark_inclusion_queries(n, conns, sql, values)
   puts sql[0]
   puts "********#{sql[1]}**********"
   puts "#{n} times on db: #{conns[0].db} & #{conns[1].db}"
-  params_arr = generate_params(n, [""], {0 => values})
-  integer_params_arr = params_arr.map{|x| [values.index(x[0])]}
+  params_arr = generate_params(n, [""], { 0 => values })
+  integer_params_arr = params_arr.map { |x| [values.index(x[0])] }
   Benchmark.bm do |x|
     x.report { for i in 0...n; execute_sql_before(conns[0], sql[0], params_arr[i]); end }
     x.report { for i in 0...n; execute_sql_before(conns[1], sql[0], integer_params_arr[i]); end }
@@ -23,22 +23,21 @@ conns = [conn_before, conn_after]
 
 # #7
 n = 100
-sql = ""'
+sql = "" '
 SELECT "people".* FROM "people" WHERE "people"."site_id" = 1 AND "people"."gender" = $1
-'""
-values = [nil, 'female', 'male']
+' ""
+values = [nil, "female", "male"]
 benchmark_inclusion_queries(n, conns, [sql, 7], values)
 
 # #1
 n = 1000
-sql = ""'
+sql = "" '
 SELECT "custom_fields".* FROM "custom_fields" WHERE "custom_fields"."site_id" = 1 AND "custom_fields"."format" = $1
-'""
-values = ['string', 'number', 'boolean', 'date']
-
+' ""
+values = ["string", "number", "boolean", "date"]
 
 benchmark_inclusion_queries(n, conns, [sql, 1], values)
 
 conns.each do |conn|
-    conn.close
+  conn.close
 end
