@@ -26,10 +26,9 @@ db = "onebody200k_dev"
 # initialize the conn
 conn = PG.connect(:hostaddr => "127.0.0.1", :port => 5432, :dbname => db, :user => "jwy", :password => "")
 mysql_conn = build_connection("onebody_dev")
-
+run_params = []
 # # format check barcode_id #11
 n = 1000
-# n = 1
 sql = "" '
 SELECT "families".* FROM "families" WHERE "families"."site_id" = 1 AND (barcode_id = $1 or alternate_barcode_id = $1)
 ' ""
@@ -45,9 +44,9 @@ index_range_hash[0] = generate_random_barcode_id_params(n)
 format_regex = /\A\d+\z/
 format_param_index = 0
 params_arr = generate_params(n, params, index_range_hash)
-
-benchmark_queries(n, conn, [sql, 11], params_arr, format_regex, format_param_index)
-benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 11], params_arr, format_regex, format_param_index, true)
+run_params << [n, [sql, 11], [mysql_query, 11], params_arr.dup, format_regex, format_param_index, true]
+# benchmark_format_mysql_queries(n, conn, [sql, 11], params_arr, format_regex, format_param_index)
+# benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 11], params_arr, format_regex, format_param_index, true)
 
 # #23
 sql = "" '
@@ -56,8 +55,9 @@ SELECT  "families".* FROM "families" WHERE "families"."site_id" = 1 AND "familie
 mysql_query = "
 SELECT  `families`.* FROM `families` WHERE `families`.`site_id` = 1 AND `families`.`barcode_id` = $1 AND `families`.`deleted` = 0  ORDER BY `families`.`id` ASC LIMIT 1
 "
-benchmark_queries(n, conn, [sql, 23], params_arr, format_regex, format_param_index)
-benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 23], params_arr, format_regex, format_param_index, with = true)
+# benchmark_queries(n, conn, [sql, 23], params_arr, format_regex, format_param_index)
+# benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 23], params_arr, format_regex, format_param_index, with = true)
+run_params << [n, [sql, 23], [mysql_query, 23], params_arr, format_regex, format_param_index, true]
 
 # #24
 sql = "" '
@@ -66,8 +66,9 @@ SELECT  "families".* FROM "families" WHERE "families"."site_id" = 1 AND "familie
 mysql_query = "
 SELECT  `families`.* FROM `families` WHERE `families`.`site_id` = 1 AND `families`.`alternate_barcode_id` = '1' AND `families`.`deleted` = 0  ORDER BY `families`.`id` ASC LIMIT 1
 "
-benchmark_queries(n, conn, [sql, 24], params_arr, format_regex, format_param_index)
-benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 24], params_arr, format_regex, format_param_index, with = true)
+# benchmark_queries(n, conn, [sql, 24], params_arr, format_regex, format_param_index)
+# benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 24], params_arr, format_regex, format_param_index, with = true)
+run_params << [n, [sql, 24], [mysql_query, 24], params_arr, format_regex, format_param_index, true]
 
 # #26
 sql = "" '
@@ -76,8 +77,10 @@ SELECT  "families".* FROM "families" WHERE "families"."site_id" = 1 AND "familie
 mysql_query = "
 SELECT  `families`.* FROM `families` WHERE `families`.`site_id` = 1 AND `families`.`deleted` = 0 AND (barcode_id = $1 or alternate_barcode_id = $1)  ORDER BY `families`.`id` ASC LIMIT 1
 "
-benchmark_queries(n, conn, [sql, 26], params_arr, format_regex, format_param_index)
-benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 26], params_arr, format_regex, format_param_index)
+# benchmark_queries(n, conn, [sql, 26], params_arr, format_regex, format_param_index)
+# benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 26], params_arr, format_regex, format_param_index)
+run_params << [n, [sql, 26], [mysql_query, 26], params_arr, format_regex, format_param_index, true]
+
 # #27
 sql = "" '
 SELECT "people".* FROM "people" INNER JOIN "families" ON "families"."id" = "people"."family_id" AND "families"."site_id" = 1 WHERE "people"."site_id" = 1 AND "people"."deleted" = false AND ((families.barcode_id = $1 or families.alternate_barcode_id = $1)) 
@@ -85,12 +88,14 @@ SELECT "people".* FROM "people" INNER JOIN "families" ON "families"."id" = "peop
 mysql_query = "
 SELECT `people`.* FROM `people` INNER JOIN `families` ON `families`.`id` = `people`.`family_id` AND `families`.`site_id` = 1 WHERE `people`.`site_id` = 1 AND `people`.`deleted` = 0 AND ((families.barcode_id = $1 or families.alternate_barcode_id = $1))
 "
-benchmark_queries(n, conn, [sql, 27], params_arr, format_regex, format_param_index)
-benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 27], params_arr, format_regex, format_param_index, with = true)
+# benchmark_queries(n, conn, [sql, 27], params_arr, format_regex, format_param_index)
+# benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 27], params_arr, format_regex, format_param_index, with = true)
+n = 10
+run_params << [n, [sql, 27], [mysql_query, 27], params_arr.dup, format_regex, format_param_index, true]
 
 puts "------Finish family related--------"
 # #14
-n = 1
+n = 1000
 sql = "" '
 SELECT "people".* FROM "people" WHERE "people"."site_id" = 1 AND (lower(email) = $1)
 ' ""
@@ -105,8 +110,9 @@ index_range_hash[0] = people_emails
 format_regex = /\A[a-z\-_0-9\.%]+(\+[a-z\-_0-9\.%]+)?\@[a-z\-0-9\.]+\.[a-z\-]{2,}\z/i
 format_param_index = 0
 params_arr = generate_params(n, params, index_range_hash)
-benchmark_queries(n, conn, [sql, 14], params_arr, format_regex, format_param_index)
-benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 14], params_arr, format_regex, format_param_index, with = true)
+# benchmark_queries(n, conn, [sql, 14], params_arr, format_regex, format_param_index)
+# benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 14], params_arr, format_regex, format_param_index, with = true)
+run_params << [n, [sql, 14], [mysql_query, 14], params_arr.dup, format_regex, format_param_index, true]
 
 # #15
 sql = "" '
@@ -115,8 +121,9 @@ SELECT "people".* FROM "people" WHERE "people"."site_id" = 1 AND (lower(alternat
 mysql_query = "
 SELECT  `people`.* FROM `people` WHERE `people`.`site_id` = 1 AND (lower(alternate_email) = $1)  ORDER BY `people`.`id` ASC LIMIT 1
 "
-benchmark_queries(n, conn, [sql, 15], params_arr, format_regex, format_param_index)
-benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 15], params_arr, format_regex, format_param_index)
+# benchmark_queries(n, conn, [sql, 15], params_arr, format_regex, format_param_index)
+# benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 15], params_arr, format_regex, format_param_index)
+run_params << [n, [sql, 15], [mysql_query, 15], params_arr.dup, format_regex, format_param_index, true]
 
 # #16
 # n = 1000
@@ -126,8 +133,9 @@ SELECT  "people".* FROM "people" WHERE "people"."site_id" = 1 AND "people"."dele
 mysql_query = "
 SELECT  `people`.* FROM `people` WHERE `people`.`site_id` = 1 AND `people`.`deleted` = 0 AND `people`.`email` = $1  ORDER BY `people`.`id` ASC LIMIT 1
 "
-benchmark_queries(n, conn, [sql, 16], params_arr, format_regex, format_param_index)
-benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 16], params_arr, format_regex, format_param_index)
+# benchmark_queries(n, conn, [sql, 16], params_arr, format_regex, format_param_index)
+# benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 16], params_arr, format_regex, format_param_index)
+run_params << [n, [sql, 16], [mysql_query, 16], params_arr.dup, format_regex, format_param_index, true]
 
 # #17
 # n = 1000
@@ -137,8 +145,9 @@ SELECT  "people".* FROM "people" WHERE "people"."site_id" = 1 AND "people"."emai
 mysql_query = "
 SELECT  `people`.* FROM `people` WHERE `people`.`site_id` = 1 AND `people`.`email` = $1  ORDER BY `people`.`id` ASC LIMIT 1
 "
-benchmark_queries(n, conn, [sql, 17], params_arr, format_regex, format_param_index)
-benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 17], params_arr, format_regex, format_param_index)
+# benchmark_queries(n, conn, [sql, 17], params_arr, format_regex, format_param_index)
+# benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 17], params_arr, format_regex, format_param_index)
+run_params << [n, [sql, 17], [mysql_query, 17], params_arr.dup, format_regex, format_param_index, true]
 
 # #25
 # n = 1000
@@ -148,8 +157,9 @@ SELECT  "people".* FROM "people" WHERE "people"."site_id" = 1 AND "people"."dele
 mysql_query = "
 SELECT  `people`.* FROM `people` WHERE `people`.`site_id` = 1 AND `people`.`deleted` = 0 AND `people`.`email` = $1  ORDER BY `people`.`id` ASC LIMIT 1
 "
-benchmark_queries(n, conn, [sql, 25], params_arr, format_regex, format_param_index)
-benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 25], params_arr, format_regex, format_param_index)
+# benchmark_queries(n, conn, [sql, 25], params_arr, format_regex, format_param_index)
+# benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 25], params_arr, format_regex, format_param_index)
+run_params << [n, [sql, 25], [mysql_query, 25], params_arr.dup, format_regex, format_param_index, true]
 
 # #18
 n = 1000
@@ -167,8 +177,9 @@ index_range_hash[0] = people_emails
 index_range_hash[1] = get_all_table_fields(conn, "people", "id")
 index_range_hash[2] = get_all_table_fields(conn, "families", "id")
 params_arr = generate_params(n, params, index_range_hash)
-benchmark_queries(n, conn, [sql, 18], params_arr, format_regex, format_param_index)
-benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 18], params_arr, format_regex, format_param_index)
+# benchmark_queries(n, conn, [sql, 18], params_arr, format_regex, format_param_index)
+# benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 18], params_arr, format_regex, format_param_index)
+run_params << [n, [sql, 18], [mysql_query, 18], params_arr.dup, format_regex, format_param_index, true]
 
 # #19
 n = 1000
@@ -180,8 +191,9 @@ SELECT "people".* FROM "people" WHERE "people"."site_id" = 1 AND "people"."famil
 mysql_query = "
 SELECT `people`.* FROM `people` WHERE `people`.`site_id` = 1 AND `people`.`family_id` = $3 AND `people`.`deleted` = 0 AND `people`.`email` = $1 AND (`people`.`id` != $2)  ORDER BY `people`.`position` ASC
 "
-benchmark_queries(n, conn, [sql, 19], params_arr, format_regex, format_param_index)
-benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 19], params_arr, format_regex, format_param_index)
+# benchmark_queries(n, conn, [sql, 19], params_arr, format_regex, format_param_index)
+# benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 19], params_arr, format_regex, format_param_index)
+run_params << [n, [sql, 19], [mysql_query, 19], params_arr.dup, format_regex, format_param_index, true]
 
 # #20
 n = 1000
@@ -193,8 +205,9 @@ UPDATE "people" SET "primary_emailer" = false WHERE "people"."id" IN (SELECT "pe
 mysql_query = "
 UPDATE `people` SET `people`.`primary_emailer` = 0 WHERE `people`.`site_id` = 1 AND `people`.`family_id` = $3 AND `people`.`deleted` = 0 AND `people`.`email` = $1 AND (`people`.`id` != $2) ORDER BY `people`.`position` ASC
 "
-benchmark_queries(n, conn, [sql, 20], params_arr, format_regex, format_param_index)
-benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 20], params_arr, format_regex, format_param_index)
+# benchmark_queries(n, conn, [sql, 20], params_arr, format_regex, format_param_index)
+# benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 20], params_arr, format_regex, format_param_index)
+run_params << [n, [sql, 20], [mysql_query, 20], params_arr.dup, format_regex, format_param_index, true]
 
 # #22
 # code: Person.undeleted.where(email: email, api_key: api_key).first
@@ -211,8 +224,9 @@ people_emails = generate_random_email_params(n)
 index_range_hash[0] = people_emails
 index_range_hash[1] = get_all_table_fields(conn, "people", "api_key")
 params_arr = generate_params(n, params, index_range_hash)
-benchmark_queries(n, conn, [sql, 22], params_arr, format_regex, format_param_index)
-benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 22], params_arr, format_regex, format_param_index)
+# benchmark_queries(n, conn, [sql, 22], params_arr, format_regex, format_param_index)
+# benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 22], params_arr, format_regex, format_param_index)
+run_params << [n, [sql, 22], [mysql_query, 22], params_arr.dup, format_regex, format_param_index, true]
 
 puts "---------Finish email related query--------------"
 n = 1000
@@ -232,8 +246,9 @@ format_param_index = 0
 format_regex = /\A(https?:\/\/|www\.)/
 params_arr = generate_params(n, params, index_range_hash)
 
-benchmark_queries(n, conn, [sql, 13], params_arr, format_regex, format_param_index, false)
-benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 13], params_arr, format_regex, format_param_index, false)
+# benchmark_queries(n, conn, [sql, 13], params_arr, format_regex, format_param_index, false)
+# benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 13], params_arr, format_regex, format_param_index, false)
+run_params << [n, [sql, 13], [mysql_query, 13], params_arr.dup, format_regex, format_param_index, false]
 
 # #21
 # code: Site.where(host: request.host, active: true).first
@@ -243,8 +258,17 @@ SELECT  "sites".* FROM "sites" WHERE "sites"."host" = $1 AND "sites"."active" = 
 mysql_query = "
 SELECT  `sites`.* FROM `sites` WHERE `sites`.`host` = $1 AND `sites`.`active` = 1  ORDER BY `sites`.`id` ASC LIMIT 1
 "
-benchmark_queries(n, conn, [sql, 21], params_arr, format_regex, format_param_index, false)
-benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 21], params_arr, format_regex, format_param_index, false)
+# benchmark_queries(n, conn, [sql, 21], params_arr, format_regex, format_param_index, false)
+# benchmark_format_mysql_queries(n, mysql_conn, [mysql_query, 21], params_arr, format_regex, format_param_index, false)
+run_params << [n, [sql, 21], [mysql_query, 21], params_arr.dup, format_regex, format_param_index, false]
+
+run_params.each do |n, sql, mysql, params_arr, format_regex, format_param_index, with|
+  # n = 1
+  n = 100 if n > 100
+  t_psql, plans_psql = benchmark_format_mysql_queries(n, conn, sql, params_arr, format_regex, format_param_index, with)
+  t_mysql, plans_mysql = benchmark_format_mysql_queries(n, mysql_conn, mysql, params_arr, format_regex, format_param_index, with)
+  $final_re << [t_psql, plans_psql, t_mysql, plans_mysql, n, sql[-1]]
+end
 
 # close the db connection
 conn.close

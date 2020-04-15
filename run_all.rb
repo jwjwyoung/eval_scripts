@@ -1,0 +1,21 @@
+$final_re = []
+
+load "eval.rb"
+load "eval_format_check.rb"
+load "eval_inclusion.rb"
+load "eval_unusual.rb"
+
+log_file = open("unusal.log", "w")
+$final_re = $final_re.sort{|a,b| a[-1] <=> b[-1]}
+log_file.write("# psql_before psql_after psql_sp mysql_before mysql_after mysql_sp\n")
+$final_re.each do |t_psql, plans_psql, t_mysql, plans_mysql, n, sql|
+  psql_before = t_psql[0].real * 1000 / n
+  psql_after = t_psql[1].real * 1000 / n
+  psql_sp = (psql_before / psql_after * 100).to_i / 100.0
+  mysql_before = t_mysql[0].real * 1000 / n
+  mysql_after = t_mysql[1].real * 1000 / n
+  mysql_sp = (mysql_before / mysql_after * 100).to_i / 100.0
+  #log_file.write("##{sqls[-2]} #{sqls[-1]}\n")
+  log_file.write("#{sql} #{psql_before.round(2)} #{psql_after.round(2)} #{psql_sp} #{mysql_before.round(2)} #{mysql_after.round(2)} #{mysql_sp}\n")
+end
+log_file.close
