@@ -53,13 +53,16 @@ field = "gender"
 values = ["female", "male"]
 tables << [table, field, values.dup]
 
-# conn = duplicate_psql()
+conn = duplicate_psql()
+# new_db = "onebody200k_dev_changeStr2Int"
+# conn = conn = PG.connect(:hostaddr => "127.0.0.1", :port => 5432, :dbname => new_db, :user => "jwy", :password => "")
 mysql_conn = duplicate_mysql()
+
 # Mysql2::Client.new(:host => "localhost", :username => "root")
 # new_db = "onebody_dev_changeStr2Int"
 # mysql_conn.query("use #{new_db};")
 
 tables.each do |table, field, values|
-  #change_string2int(conn, table, field, values)
-  change_string2int(mysql_conn, table, field, values)
+  change_string2int(conn, table, field, values)
+  schange_string2int(mysql_conn, table, field, values)
 end

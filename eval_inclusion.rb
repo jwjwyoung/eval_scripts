@@ -36,7 +36,7 @@ conns = [conn_before, conn_after]
 mysql_conn_before = build_connection("onebody_dev")
 mysql_conn_after = build_connection("onebody_dev_changeStr2Int")
 mysql_conns = [mysql_conn_before, mysql_conn_after]
-# #7
+# #6
 n = 1000
 sql = "" '
 SELECT "people".* FROM "people" WHERE "people"."site_id" = 1 AND "people"."gender" = $1
@@ -45,7 +45,7 @@ mysql_sql = "
 SELECT `people`.* FROM `people` WHERE `people`.`site_id` = 1 AND `people`.`gender` = $1
 "
 values = [nil, "female", "male"]
-inclusion_params << [n, conns, [sql, 7], mysql_conns, [mysql_sql, 7], values]
+inclusion_params << [n, conns, [sql, 6], mysql_conns, [mysql_sql, 6], values]
 # benchmark_inclusion_queries(n, conns, [sql, 7], values)
 # benchmark_inclusion_queries(n, mysql_conns, [mysql_sql, 7], values)
 
@@ -61,12 +61,27 @@ values = ["string", "number", "boolean", "date"]
 
 # benchmark_inclusion_queries(n, conns, [sql, 1], values)
 # benchmark_inclusion_queries(n, mysql_conns, [mysql_sql, 1], values)
-inclusion_params << [n, conns, [sql, 1], mysql_conns, [mysql_sql, 7], values]
+inclusion_params << [n, conns, [sql, 1], mysql_conns, [mysql_sql, 1], values]
 
 inclusion_params.each do |n, conns, sql, mysql_conns, mysql_sql, values|
-  #n = 1
   n = 100
-  t_psql, plans_psql = benchmark_inclusion_queries(n, conns, sql, values)
-  t_mysql, plans_mysql = benchmark_inclusion_queries(n, mysql_conns, mysql_sql, values)
-  $final_re << [t_psql, plans_psql, t_mysql, plans_mysql, n, sql[-1]]
+  n = 1
+  t_psqls = []
+  t_mysqls = []
+  group = 1000
+  group.times do
+    t_psql, plans_psql = benchmark_inclusion_queries(n, conns, sql, values)
+    t_mysql, plans_mysql = benchmark_inclusion_queries(n, mysql_conns, mysql_sql, values)
+    t_psqls << t_psql
+    t_mysqls << t_mysql
+  end
+  t_psql_befores = t_psqls.map { |x| x[0].real }
+  t_psql_afters = t_psqls.map { |x| x[1].real }
+  t_mysql_befores = t_mysqls.map { |x| x[0].real }
+  t_mysql_afters = t_mysqls.map { |x| x[1].real }
+  print_data(t_psql_befores)
+  print_data(t_psql_afters)
+  print_data(t_mysql_befores)
+  print_data(t_mysql_afters)
+  #$final_re << [t_psql, plans_psql, t_mysql, plans_mysql, n, sql, sql[-1]]
 end

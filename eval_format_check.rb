@@ -263,11 +263,11 @@ SELECT  `sites`.* FROM `sites` WHERE `sites`.`host` = $1 AND `sites`.`active` = 
 run_params << [n, [sql, 21], [mysql_query, 21], params_arr.dup, format_regex, format_param_index, false]
 
 run_params.each do |n, sql, mysql, params_arr, format_regex, format_param_index, with|
-  # n = 1
   n = 100 if n > 100
+  #n = 1
   t_psql, plans_psql = benchmark_format_mysql_queries(n, conn, sql, params_arr, format_regex, format_param_index, with)
   t_mysql, plans_mysql = benchmark_format_mysql_queries(n, mysql_conn, mysql, params_arr, format_regex, format_param_index, with)
-  $final_re << [t_psql, plans_psql, t_mysql, plans_mysql, n, sql[-1]]
+  $final_re << [t_psql, plans_psql, t_mysql, plans_mysql, n, sql, sql[-1]]
 end
 
 # close the db connection

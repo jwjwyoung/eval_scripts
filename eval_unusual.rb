@@ -1,7 +1,8 @@
 load "./eval.rb"
 load "./eval_mysql.rb"
-
-conn = PG.connect(:hostaddr => "127.0.0.1", :port => 5432, :dbname => "onebody200k_dev", :user => "jwy", :password => "")
+dbname = "onebody200k_dev"
+#dbname = "onebody100k"
+conn = PG.connect(:hostaddr => "127.0.0.1", :port => 5432, :dbname => dbname, :user => "jwy", :password => "")
 dbname = "onebody_dev"
 mysql_conn = build_connection(dbname)
 # or for a non IP address :host => 'my.host.name.com' instead of hostaddr
@@ -24,7 +25,7 @@ sql_after = "" '
 UPDATE "people" SET "primary_emailer" = false WHERE "people"."id" IN (SELECT "people"."id" FROM "people" WHERE "people"."site_id" = $1 AND "people"."family_id" = $2 AND "people"."deleted" = $3 AND "people"."email" = $4 AND ("people"."id" != $5)   LIMIT 1)
 ' ""
 mysql_query1 = "UPDATE `people` SET `people`.`primary_emailer` = 0 WHERE `people`.`site_id` = 1 AND `people`.`family_id` = $2 AND `people`.`deleted` = 0 AND `people`.`email` = $4 AND (`people`.`id` != $5) ORDER BY `people`.`position` ASC"
-mysql_query2 = "UPDATE `people` SET `people`.`primary_emailer` = 0 WHERE `people`.`site_id` = 1 AND `people`.`family_id` = $2 AND `people`.`deleted` = 0 AND `people`.`email` = $4 AND (`people`.`id` != $5) ORDER BY `people`.`position` ASC LIMIT 1"
+mysql_query2 = "UPDATE `people` SET `people`.`primary_emailer` = 0 WHERE `people`.`site_id` = 1 AND `people`.`family_id` = $2 AND `people`.`deleted` = 0 AND `people`.`email` = $4 AND (`people`.`id` != $5) LIMIT 1"
 # family_id, email, id needs to be generated
 # ["site_id", 1], ["family_id", 1], ["deleted", "f"], ["email", "sdf"], ["id", 2]
 family_ids = get_all_table_fields(conn, "families", "id")
@@ -86,6 +87,50 @@ mysql_sqls = [mysql_query1, mysql_query2, 8, "remove predicate is null"]
 params_arr = generate_params(n, params, index_range_hash)
 run_params << [n, conn, sqls.dup, mysql_sqls.dup, params.dup, index_range_hash.dup, nil]
 
+# remove predicate #29
+n = 100
+sql_before = "
+select category, count(*) as group_count from groups where category is not null and category != '' and category != 'Subscription' and site_id = 1 group by category
+"
+sql_after = "
+select category, count(*) as group_count from groups where category != 'Subscription' and site_id = 1 group by category
+"
+mysql_query1 = "
+select category, count(*) as group_count from onebody_dev.groups where category is not null and category != '' and category != 'Subscription' and site_id = 1 group by category
+"
+mysql_query2 = "
+select category, count(*) as group_count from onebody_dev.groups where category != 'Subscription' and site_id = 1 group by category
+"
+sqls = [sql_before, sql_after, 29, "remove predicate"]
+mysql_sqls = [mysql_query1, mysql_query2, 29, "remove predicate"]
+params_arr = [nil] * n
+#benchmark_unusual_mysql_queries(n, conn, sqls, params_arr) #psql
+#benchmark_unusual_mysql_queries(n, mysql_conn, mysql_sqls, params_arr) #mysql
+group = 10
+t_psqls = []
+t_mysqls = []
+group.times do
+  n = 1
+  dbname = "onebody200k_dev"
+  dbname = "onebody100k"
+  conn = PG.connect(:hostaddr => "127.0.0.1", :port => 5432, :dbname => dbname, :user => "jwy", :password => "")
+  dbname = "onebody_dev"
+  dbname = "onebody_100k"
+  mysql_conn = build_connection(dbname)
+  t_psql, plans_psql = benchmark_unusual_mysql_queries(n, conn, sqls, params_arr, ruby_stm = nil)
+  t_mysql, plans_mysql = benchmark_unusual_mysql_queries(n, mysql_conn, mysql_sqls, params_arr, ruby_stm = nil)
+  t_psqls << t_psql
+  t_mysqls << t_mysql
+end
+t_psql_befores = t_psqls.map { |x| x[0].real }
+t_psql_afters = t_psqls.map { |x| x[1].real }
+t_mysql_befores = t_mysqls.map { |x| x[0].real }
+t_mysql_afters = t_mysqls.map { |x| x[1].real }
+print_data(t_psql_befores)
+print_data(t_psql_afters)
+print_data(t_mysql_befores)
+print_data(t_mysql_afters)
+exit
 # union or #3
 # add index on barcode_id to try again tried no big improvement
 n = 100
@@ -98,7 +143,7 @@ SELECT `families`.* FROM `families` WHERE `families`.`site_id` = 1 AND (barcode_
 "
 mysql_query2 = "
 SELECT `families`.* FROM `families` WHERE `families`.`site_id` = 1 AND barcode_id = $1
-union
+union all
 SELECT `families`.* FROM `families` WHERE `families`.`site_id` = 1 AND alternate_barcode_id = $1
 "
 params = [""]
@@ -135,12 +180,12 @@ run_params << [n, conn, sqls.dup, mysql_sqls.dup, params.dup, index_range_hash.d
 # remove predicate #9
 n = 100
 sql_before = "" "
-select path, id from pages where path != $1 and site_id = 1  order by path
+select path, id from pages where path != '' and site_id = 1  order by path
 " ""
 sql_after = "" "
 select path, id from pages where site_id = 1  order by path
 " ""
-ruby_stm = "results.select{|r| r['path'] != $1}"
+ruby_stm = "results.to_a.delete_at(0) if results.first['path'] == ''"
 sqls = [sql_before, sql_after, 9, "remove predicate"]
 params = [""]
 page_paths = get_all_table_fields(conn, "pages", "path")
@@ -170,14 +215,13 @@ sqls = [sql_before, sql_before, 28, "limit N"]
 mysql_sqls = [mysql_query1, mysql_query1, 28, "limit N"]
 run_params << [n, conn, sqls.dup, mysql_sqls.dup, params.dup, index_range_hash.dup, nil]
 
-
+$final_re = [] if not $final_re
 run_params.sort { |a, b| a[2][3] <=> b[2][3] }.each do |n, conn, sqls, mysql_sqls, params, index_range_hash, ruby_stm|
   #benchmark_queries(n, conn, sqls, params, index_range_hash, ruby_stm)
+  next if sqls[-2] != 9
   n = 100 if n > 100
   params_arr = generate_params(n, params, index_range_hash)
   t_psql, plans_psql = benchmark_unusual_mysql_queries(n, conn, sqls, params_arr, ruby_stm) #psql
   t_mysql, plans_mysql = benchmark_unusual_mysql_queries(n, mysql_conn, mysql_sqls, params_arr, ruby_stm) #mysql
-  $final_re << [t_psql, plans_psql, t_mysql, plans_mysql, n, sqls[-2]]
+  $final_re << [t_psql, plans_psql, t_mysql, plans_mysql, n, sqls, sqls[-2]]
 end
-
-

@@ -1,4 +1,10 @@
 require "mysql2"
+require "pg"
+require "benchmark"
+
+def print_data(data_arr)
+  puts "#{data_arr.max} #{data_arr.min} #{data_arr.inject(0, :+) / data_arr.length}"
+end
 
 def build_connection(dbname)
   client = Mysql2::Client.new(:host => "localhost", :username => "root")
