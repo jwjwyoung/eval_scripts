@@ -21,7 +21,6 @@ def benchmark_queries(n, conn, sql, params_arr, format_regex, format_param_index
     end
   end
 end
-$perc = 0.8
 db = "onebody200k_dev"
 # initialize the conn
 conn = PG.connect(:hostaddr => "127.0.0.1", :port => 5432, :dbname => db, :user => "jwy", :password => "")
