@@ -26,7 +26,11 @@ def generate_query(base_sql, params)
           sql = sql.gsub("$#{i + 1}", "#{p}")
         end
       else
-        sql = sql.gsub("$#{i + 1}", "(#{p.join(",")})")
+        if p[0].class == String
+          sql = sql.gsub("$#{i + 1}", "(#{p.map{|x| "\'#{x}\'"}.join(",")})")
+        else
+          sql = sql.gsub("$#{i + 1}", "(#{p.join(",")})")
+        end
       end
       #puts "#{p.class} #{sql}"
     end
@@ -84,8 +88,8 @@ def benchmark_unusual_mysql_queries(n, conn, sqls, params_arr, ruby_stm = nil)
   for i in 0...n
     sql_before_queries << generate_query(sqls[0], params_arr[i])
     if sqls[-1].include? "limit N"
-      limit_sql = generate_query(sqls[1], params_arr[i]) + " limit #{params_arr[i][2].uniq.length}"
-      sql_after_queries << limit_sql
+        limit_sql = generate_query(sqls[1], params_arr[i]) + " limit #{params_arr[i][-1].uniq.length}"
+        sql_after_queries << limit_sql
     else
       sql_after_queries << generate_query(sqls[1], params_arr[i])
     end
