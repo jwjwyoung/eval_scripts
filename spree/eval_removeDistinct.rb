@@ -15,8 +15,8 @@ psql_query2 = ""'
 SELECT "spree_products".* FROM "spree_products" INNER JOIN "spree_variants" ON "spree_variants"."deleted_at" IS NULL AND "spree_variants"."product_id" = "spree_products"."id" AND "spree_variants"."is_master" = TRUE INNER JOIN "spree_prices" ON "spree_prices"."deleted_at" IS NULL AND "spree_prices"."variant_id" = "spree_variants"."id" AND "spree_prices"."currency" = $1 WHERE "spree_products"."deleted_at" IS NULL AND "spree_prices"."amount" BETWEEN $2 AND $3 AND "spree_prices"."currency" = $1
 '""
 params = ['', 1.0, 2.0]
-currencies = get_all_table_fields(conn, "spree_products", "currency")
-prices = get_all_table_fields(conn, "spree_products", "price")
+currencies = get_all_table_fields(conn, "spree_prices", "currency")
+prices = get_all_table_fields(conn, "spree_prices", "amount")
 index_hash_array = {}
 index_hash_array[0] = currencies
 index_hash_array[1] = prices
