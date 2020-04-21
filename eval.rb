@@ -28,40 +28,43 @@ def execute_sql_before(conn, sql, params)
   end
 end
 
-def generate_random_host_params(n)
+def generate_random_host_params(n, perc=0.3)
   results = []
-  n.times do
-    if rand(10) >= 3
-      results << Faker::Internet.url
-    else
-      results << Faker::Internet.email.split("@").last
-    end
+  valid_size = (n * perc).to_i
+  invalid_size = n - valid_size
+  valid_size.times do 
+    results << Faker::Internet.email.split("@").last
   end
-  results
+  invalid_size.times do 
+    results << Faker::Internet.url
+  end
+  return results.shuffle
 end
 
-def generate_random_email_params(n)
+def generate_random_email_params(n,perc=0.3)
   results = []
-  n.times do
-    if rand(10) > 3
-      results << "#{Faker::Code.ean}"
-    else
-      results << Faker::Internet.email
-    end
+  valid_size = (n * perc).to_i
+  invalid_size = n - valid_size
+  valid_size.times do 
+    results << Faker::Internet.email
   end
-  results
+  invalid_size.times do 
+    results << "#{Faker::Code.ean}"
+  end
+  return results.shuffle
 end
 
-def generate_random_barcode_id_params(n)
+def generate_random_barcode_id_params(n,perc=0.3)
   results = []
-  n.times do
-    if rand(10) > 3
-      results << "#{Faker::Name.first_name}"
-    else
-      results << Faker::Code.ean
-    end
+  valid_size = (n * perc).to_i
+  invalid_size = n - valid_size
+  valid_size.times do 
+    results << Faker::Code.ean
   end
-  results
+  invalid_size.times do 
+    results << "#{Faker::Name.first_name}"
+  end
+  return results.shuffle
 end
 
 def execute_sql_after(conn, sql, params, format_regex, format_parameter)
