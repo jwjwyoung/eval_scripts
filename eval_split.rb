@@ -24,21 +24,21 @@ m_sqls = [mysql_before, mysql_after, 7, "add predicate"]
 n = 100
 params_arr = [nil] * n
 
-group = 1 #00
+group = 1#00
 t_psqls = []
 t_mysqls = []
 group.times do
   n = 100
   t_psql, plans_psql = benchmark_unusual_mysql_queries(n, conn, sqls, params_arr, ruby_stm = nil)
   t_mysql, plans_mysql = benchmark_unusual_mysql_queries(n, mysql_conn, m_sqls, params_arr, ruby_stm = nil)
-  #t_psqls << t_psql
+  t_psqls << t_psql
   t_mysqls << t_mysql
 end
-#t_psql_befores = t_psqls.map { |x| x[0].real }
-#t_psql_afters = t_psqls.map { |x| x[1].real }
+t_psql_befores = t_psqls.map { |x| x[0].real }
+t_psql_afters = t_psqls.map { |x| x[1].real }
 t_mysql_befores = t_mysqls.map { |x| x[0].real }
 t_mysql_afters = t_mysqls.map { |x| x[1].real }
-#print_data(t_psql_befores)
-#print_data(t_psql_afters)
+print_data(t_psql_befores)
+print_data(t_psql_afters)
 print_data(t_mysql_befores)
 print_data(t_mysql_afters)

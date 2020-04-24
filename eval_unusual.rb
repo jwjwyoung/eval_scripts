@@ -11,10 +11,31 @@ run_params = []
 # remove join #2
 sql_before = "SELECT COUNT(*) FROM people INNER JOIN families ON families.id = people.family_id AND families.site_id = 1 WHERE people.site_id = 1"
 sql_after = "select count(*) from people"
-n = 100
+n = 1
 sqls = [sql_before, sql_after, 2, "remove join"]
 run_params << [n, conn, sqls, sqls, nil, nil, nil]
 params_arr = generate_params(n, nil, nil)
+
+
+# #30 add limit 1
+n = 1000
+sql_before = ""'
+SELECT COUNT(*) FROM "memberships" WHERE "memberships"."site_id" = 1 AND "memberships"."group_id" = $1
+'""
+sql_after = ""'
+SELECT 1 FROM "memberships" WHERE "memberships"."site_id" = 1 AND "memberships"."group_id" = $1 limit 1;
+'""
+group_ids = get_all_table_fields(conn, "memberships", "group_id")
+index_range_hash = {}
+index_range_hash[0] = group_ids
+sqls = [sql_before, sql_after, 30, "add limit 1"]
+m_sqls = [sql_before.gsub("\"", "`"), sql_after.gsub("\"", "`"), 30, "add limit 1"]
+params = [1]
+params_arr = generate_params(n, params, index_range_hash)
+benchmark_unusual_mysql_queries(n, conn, sqls, params_arr, ruby_stm = nil)
+benchmark_unusual_mysql_queries(n, mysql_conn, m_sqls, params_arr, ruby_stm = nil)
+
+exit
 
 n = 1000
 # add limit 1 #4
