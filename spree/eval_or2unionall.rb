@@ -28,11 +28,11 @@ SELECT "spree_variants".* FROM "spree_variants" WHERE "spree_variants"."deleted_
 '""
 
 mysql_query = psql_query.gsub("\"", "`")
-mysql_query = psql_query2.gsub("\"", "`")
+mysql_query2 = psql_query2.gsub("\"", "`")
 
 
 sqls = [psql_query, psql_query2, 2, "add limit 1"]
-m_sqls = [sql_query, sql_query2, 2, "add limit 1"]
+m_sqls = [mysql_query, mysql_query2, 2, "add limit 1"]
 params_arr = generate_params(n, nil, nil)
 result = benchmark_unusual_mysql_queries(n, conn, sqls, params_arr, ruby_stm = nil)
 result2 = benchmark_unusual_mysql_queries(n, mysql_conn, m_sqls, params_arr, ruby_stm = nil)
