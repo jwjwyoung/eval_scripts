@@ -29,13 +29,16 @@ m_sqls = [sql_query, sql_query2, 2, "add limit 1"]
 params_arr = generate_params(n, params, index_hash_array)
 result = benchmark_unusual_mysql_queries(n, conn, sqls, params_arr, ruby_stm = nil)
 result2 = benchmark_unusual_mysql_queries(n, mysql_conn, m_sqls, params_arr, ruby_stm = nil)
-puts "before"
-puts result[1][0].map{|row| row.values}.join("\n")
-puts "===="
-puts "after"
-puts result[1][1].map{|row| row.values}.join("\n")
-puts "before"
-puts result2[1][0].map{|row| row}.join("\n")
-puts "===="
-puts "after"
-puts result2[1][1].map{|row| row}.join("\n")
+# puts "before"
+# puts result[1][0].map{|row| row.values}.join("\n")
+# puts "===="
+# puts "after"
+# puts result[1][1].map{|row| row.values}.join("\n")
+# puts "before"
+# puts result2[1][0].map{|row| row}.join("\n")
+# puts "===="
+# puts "after"
+# puts result2[1][1].map{|row| row}.join("\n")
+if $final_re
+    $final_re << [result[0], result[1], result2[0], result2[1], n, sqls, sqls[-2]]
+end

@@ -7,7 +7,7 @@ conn = PG.connect(:hostaddr => "127.0.0.1", :port => 5432, :dbname => db, :user 
 mysql_conn = build_connection(db)
 
 # #11
-n = 1000
+n = 10#00
 psql_query = ""'
 SELECT DISTINCT "spree_products".* FROM "spree_products" INNER JOIN "spree_variants" ON "spree_variants"."deleted_at" IS NULL AND "spree_variants"."product_id" = "spree_products"."id" AND "spree_variants"."is_master" = true INNER JOIN "spree_prices" ON "spree_prices"."deleted_at" IS NULL AND "spree_prices"."variant_id" = "spree_variants"."id" AND "spree_prices"."currency" = $1 WHERE "spree_products"."deleted_at" IS NULL AND "spree_prices"."amount" BETWEEN $2 AND $3 AND "spree_prices"."currency" = $1
 '""
@@ -28,3 +28,7 @@ m_sqls = [sql_query, sql_query2, 11, "remove distinct"]
 params_arr = generate_params(n, params, index_hash_array)
 result = benchmark_unusual_mysql_queries(n, conn, sqls, params_arr, ruby_stm = nil)
 result2 = benchmark_unusual_mysql_queries(n, mysql_conn, m_sqls, params_arr, ruby_stm = nil)
+
+if $final_re
+    $final_re << [result[0], result[1], result2[0], result2[1], n, sqls, sqls[-2]]
+end

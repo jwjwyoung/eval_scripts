@@ -26,3 +26,7 @@ m_sqls = [sql_query, sql_query2, 12, "remove join"]
 params_arr = generate_params(n, params, index_hash_array)
 result = benchmark_unusual_mysql_queries(n, conn, sqls, params_arr, ruby_stm = nil)
 result2 = benchmark_unusual_mysql_queries(n, mysql_conn, m_sqls, params_arr, ruby_stm = nil)
+
+if $final_re
+    $final_re << [result[0], result[1], result2[0], result2[1], n, sqls, sqls[-2]]
+end
