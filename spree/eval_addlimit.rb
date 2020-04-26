@@ -6,6 +6,31 @@ db = "spree"
 conn = PG.connect(:hostaddr => "127.0.0.1", :port => 5432, :dbname => db, :user => "junwen", :password => "1234")
 mysql_conn = build_connection(db)
 
+# #1
+# Code: (product.)classifications.where(taxon: taxon)
+n = 1000
+psql_query = ""'
+SELECT "spree_products_taxons".* FROM "spree_products_taxons" WHERE "spree_products_taxons"."product_id" = $1 AND "spree_products_taxons"."taxon_id" = $2
+'""
+psql_query2 = ""'
+SELECT "spree_products_taxons".* FROM "spree_products_taxons" WHERE "spree_products_taxons"."product_id" = $1 AND "spree_products_taxons"."taxon_id" = $2 LIMIT 1
+'""
+sql_query = psql_query.gsub("\"", "`")
+sql_query2 = psql_query2.gsub("\"", "`")
+params = [1, true]
+product_ids = get_all_table_fields(conn, "spree_products", "id")
+taxon_ids = get_all_table_fields(conn, "spree_taxons", "id")
+index_hash_array = {}
+index_hash_array[0] = product_ids
+index_hash_array[1] = taxon_ids
+sqls = [psql_query, psql_query2, 1, "add limit 1"]
+m_sqls = [sql_query, sql_query2, 1, "add limit 1"]
+params_arr = generate_params(n, params, index_hash_array)
+result = benchmark_unusual_mysql_queries(n, conn, sqls, params_arr, ruby_stm = nil)
+result2 = benchmark_unusual_mysql_queries(n, mysql_conn, m_sqls, params_arr, ruby_stm = nil)
+if $final_re
+    $final_re << [result[0], result[1], result2[0], result2[1], n, sqls, sqls[-2]]
+end
 
 # #2 
 # Code: Spree::Variant.where(product_id: variant.product_id, is_master: variant.is_master?).in_stock_or_backorderable
