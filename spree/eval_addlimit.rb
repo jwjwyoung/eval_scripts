@@ -67,3 +67,51 @@ result2 = benchmark_unusual_mysql_queries(n, mysql_conn, m_sqls, params_arr, rub
 if $final_re
     $final_re << [result[0], result[1], result2[0], result2[1], n, sqls, sqls[-2]]
 end
+
+
+n = 1000
+psql_query = ""'
+SELECT COUNT(*) FROM "spree_stores" WHERE "spree_stores"."default" = true
+'""
+psql_query2 = ""'
+SELECT 1 FROM "spree_stores" WHERE "spree_stores"."default" = true LIMIT 1
+'""
+sql_query = psql_query.gsub("\"", "`")
+sql_query2 = psql_query2.gsub("\"", "`")
+sqls = [psql_query, psql_query2, 3, "add limit 1"]
+m_sqls = [sql_query, sql_query2, 3, "add limit 1"]
+params_arr = generate_params(n, nil, nil)
+result = benchmark_unusual_mysql_queries(n, conn, sqls, params_arr, ruby_stm = nil)
+result2 = benchmark_unusual_mysql_queries(n, mysql_conn, m_sqls, params_arr, ruby_stm = nil)
+if $final_re
+    $final_re << [result[0], result[1], result2[0], result2[1], n, sqls, sqls[-2]]
+end
+
+
+
+
+# #1
+# Code: (product.)classifications.where(taxon: taxon)
+n = 1000
+psql_query = ""'
+SELECT "spree_states".* FROM "spree_states" WHERE "spree_states"."country_id" = $1 AND (name = $2 OR abbr = $2)
+'""
+psql_query2 = ""'
+SELECT "spree_states".* FROM "spree_states" WHERE "spree_states"."country_id" = $1 AND (name = $2 OR abbr = $2) LIMIT 1
+'""
+sql_query = psql_query.gsub("\"", "`")
+sql_query2 = psql_query2.gsub("\"", "`")
+params = [1, ""]
+country_ids = get_all_table_fields(conn, "spree_countries", "id")
+name_abbrs = get_all_table_fields(conn, "spree_states", "name") + get_all_table_fields(conn, "spree_states", "abbr")
+index_hash_array = {}
+index_hash_array[0] = country_ids
+index_hash_array[1] = name_abbrs
+sqls = [psql_query, psql_query2, 5, "add limit 1"]
+m_sqls = [sql_query, sql_query2, 5, "add limit 1"]
+params_arr = generate_params(n, params, index_hash_array)
+result = benchmark_unusual_mysql_queries(n, conn, sqls, params_arr, ruby_stm = nil)
+result2 = benchmark_unusual_mysql_queries(n, mysql_conn, m_sqls, params_arr, ruby_stm = nil)
+if $final_re
+    $final_re << [result[0], result[1], result2[0], result2[1], n, sqls, sqls[-2]]
+end
