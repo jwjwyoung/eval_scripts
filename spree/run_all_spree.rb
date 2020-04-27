@@ -1,9 +1,10 @@
 
 $final_re = []
-load File.join(File.dirname(__FILE__),  './eval_addlimit.rb')
-load File.join(File.dirname(__FILE__),  './eval_or2unionall.rb')
-load File.join(File.dirname(__FILE__),  './eval_removeJoin.rb')
+# load File.join(File.dirname(__FILE__),  './eval_addlimit.rb')
+# load File.join(File.dirname(__FILE__),  './eval_or2unionall.rb')
+# load File.join(File.dirname(__FILE__),  './eval_removeJoin.rb')
 load File.join(File.dirname(__FILE__),  './eval_removeDistinct.rb')
+load File.join(File.dirname(__FILE__),  './eval_addPredicate.rb')
 
 log_file = open("unusal_#{Time.now.to_s.gsub(" ", "_")}.log", "w")
 query_plan_file = open("spreequeryplan.log", "w")
