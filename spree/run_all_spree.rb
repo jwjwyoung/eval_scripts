@@ -1,8 +1,8 @@
 
 $final_re = []
-# load File.join(File.dirname(__FILE__),  './eval_addlimit.rb')
-# load File.join(File.dirname(__FILE__),  './eval_or2unionall.rb')
-# load File.join(File.dirname(__FILE__),  './eval_removeJoin.rb')
+load File.join(File.dirname(__FILE__),  './eval_addlimit.rb')
+load File.join(File.dirname(__FILE__),  './eval_or2unionall.rb')
+load File.join(File.dirname(__FILE__),  './eval_removeJoin.rb')
 load File.join(File.dirname(__FILE__),  './eval_removeDistinct.rb')
 load File.join(File.dirname(__FILE__),  './eval_addPredicate.rb')
 

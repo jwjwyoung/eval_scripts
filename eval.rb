@@ -1,5 +1,6 @@
 require "pg"
 require "benchmark"
+require "faker"
 
 def execute_sql(conn, sql, params, format_check, ruby_stm = nil)
   if sql.class != Array
